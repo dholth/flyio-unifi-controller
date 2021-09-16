@@ -1,0 +1,74 @@
+# fly.toml file generated for wifify on 2021-09-10T23:05:14-04:00
+
+app = "unifi-controller"
+
+kill_signal = "SIGINT"
+kill_timeout = 5
+processes = []
+
+# [build]
+# based on:
+# image = "ghcr.io/linuxserver/unifi-controller"
+# to copy files over, use
+# image = "ghcr.io/linuxserver/openssh-server"
+
+[env]
+
+# Replace this to use the ssh server image
+# PUBLIC_KEY="ssh-ed25519 ......"
+
+[experimental]
+  allowed_public_ports = []
+  auto_rollback = true
+
+[[mounts]]
+  destination = "/config"
+  source = "data"
+ 
+[[services]]
+  http_checks = []
+  internal_port = 8080
+  processes = ["app"]
+  protocol = "tcp"
+  script_checks = []
+
+  [services.concurrency]
+    hard_limit = 25
+    soft_limit = 20
+    type = "connections"
+
+  [[services.ports]]
+    handlers = ["http"]
+    port = 80
+
+  [[services.ports]]
+    handlers = []
+    port = 8080
+
+  [[services.tcp_checks]]
+    grace_period = "1s"
+    interval = "15s"
+    restart_limit = 6
+    timeout = "2s"
+
+# proxy to self-signed unifi https
+[[services]]
+  internal_port = 8447
+
+  [[services.ports]]
+    handlers = ["tls", "http"]
+    port = 443
+
+  [services.concurrency]
+    hard_limit = 25
+    soft_limit = 20
+    type = "connections"
+
+# STUN server
+[[services]]
+  internal_port = 3478
+  protocol = "udp"
+
+  [[services.ports]]
+    handlers = []
+    port = 3478
